@@ -1,0 +1,54 @@
+---
+strategy: polling
+no_screen_padding: "no"
+dark_mode: "no"
+static_data: ""
+polling_verb: get
+polling_url: https://www.caltrain.com/gtfs/stops/{{ caltrain_station }}/predictions
+polling_headers: ""
+polling_body: ""
+custom_fields:
+  - keyname: caltrain_station
+    field_type: select
+    name: Caltrain Station
+    description: Select your departure station
+    required: true
+    options:
+      - San Francisco: san_francisco
+      - 22nd Street: 22nd_street
+      - Bayshore: bayshore
+      - South San Francisco: south_sf
+      - San Bruno: san_bruno
+      - Millbrae: place_MLBR
+      - Broadway: broadway
+      - Burlingame: burlingame
+      - San Mateo: san_mateo
+      - Hayward Park: hayward_park
+      - Hillsdale: hillsdale
+      - Belmont: belmont
+      - San Carlos: san_carlos
+      - Redwood City: redwood_city
+      - Menlo Park: menlo_park
+      - Palo Alto: palo_alto
+      - California Avenue: california_ave
+      - San Antonio: san_antonio
+      - Mountain View: mountain_view
+      - Sunnyvale: sunnyvale
+      - Lawrence: lawrence
+      - Santa Clara: santa_clara
+      - College Park: college_park
+      - San Jose Diridon: sj_diridon
+      - Tamien: tamien
+      - Capitol: capitol
+      - Blossom Hill: blossom_hill
+      - Morgan Hill: morgan_hill
+      - San Martin: san_martin
+      - Gilroy: gilroy
+
+  - keyname: author_bio
+    field_type: author_bio
+    name: Caltrain Real-time Departures
+    description: Real-time Caltrain departure times at a glance. Displays next departures for both northbound and southbound trains from your selected station on your TRMNL.
+    github_url: https://github.com/64bitpandas/caltrain-trmnl
+    learn_more_url: https://bencuan.me/caltrain-trmnl
+    email_address: contact@bencuan.me

@@ -1,0 +1,222 @@
+{%- comment -%}
+  Caltrain TRMNL Plugin - Full Screen Layout
+  Shows northbound and southbound departures in a split screen view
+{%- endcomment -%}
+<style>
+:root {
+  --header-size: 22px;
+  --time-size: 28px;
+  --label-size: 12px;
+  --badge-size: 11px;
+}
+.caltrain-header { font-size: var(--header-size); font-weight: bold; }
+.caltrain-time { font-size: var(--time-size); font-weight: bold; }
+.caltrain-label { font-size: var(--label-size); }
+.caltrain-badge { font-size: var(--badge-size); font-weight: bold; }
+.caltrain-summary { font-size: 14px; }
+.caltrain-col { height: auto !important; }
+.caltrain-footer { margin-bottom: 30vh; }
+</style>
+
+{%- comment -%} PST offset: 8 hours = 28800 seconds {%- endcomment -%}
+{% assign pst_offset_seconds = 28800 %}
+
+{%- comment -%} Extract station name from parent_station in meta {%- endcomment -%}
+{% assign station_name = "Station" %}
+{% if meta.parent_station.title[0].value %}
+  {% assign station_name = meta.parent_station.title[0].value %}
+{% endif %}
+
+{%- comment -%} Pre-calculate next train info for summary {%- endcomment -%}
+{% assign next_nb_min = nil %}
+{% assign next_nb_type = nil %}
+{% assign next_sb_min = nil %}
+{% assign next_sb_type = nil %}
+{% assign next_nb_ts = nil %}
+{% assign next_sb_ts = nil %}
+
+{% for entry in data %}
+  {% for prediction in entry.predictions %}
+    {% assign stop_id_str = prediction.TripUpdate.StopTimeUpdate[0].StopId %}
+    {% assign stop_id = stop_id_str | plus: 0 %}
+    {% assign remainder = stop_id | modulo: 2 %}
+    {% assign trip = prediction.TripUpdate %}
+    {% assign departure_ts = trip.StopTimeUpdate[0].Departure.Time | plus: 0 %}
+    {% assign route_id = trip.Trip.RouteId %}
+    {% assign route_lower = route_id | downcase %}
+
+    {% if route_lower contains "local" %}
+      {% assign train_type = "L" %}
+    {% elsif route_lower contains "limited" %}
+      {% assign train_type = "Ltd" %}
+    {% else %}
+      {% assign train_type = "X" %}
+    {% endif %}
+
+    {% if remainder == 1 and next_nb_ts == nil %}
+      {% assign next_nb_ts = departure_ts %}
+      {% assign next_nb_type = train_type %}
+    {% endif %}
+    {% if remainder == 0 and next_sb_ts == nil %}
+      {% assign next_sb_ts = departure_ts %}
+      {% assign next_sb_type = train_type %}
+    {% endif %}
+  {% endfor %}
+{% endfor %}
+
+<div class="layout layout--col">
+  {% if data[0].predictions[0] %}
+
+    <div class="grid grid--cols-2 gap--xsmall" style="flex: 1;">
+
+      <!-- NORTHBOUND COLUMN -->
+      <div class="layout layout--col gap--xsmall caltrain-col">
+        {% assign next_nb_pst = next_nb_ts | minus: pst_offset_seconds %}
+        <div class="label" style="font-weight: bold; padding-left: 4px; font-size: 24px;">↑ Northbound @ {{ next_nb_pst | date: "%I:%M %p" }}</div>
+
+        {% assign nb_count = 0 %}
+        {% for entry in data %}
+          {% for prediction in entry.predictions %}
+            {% if nb_count < 3 %}
+              {% assign stop_id_str = prediction.TripUpdate.StopTimeUpdate[0].StopId %}
+              {% assign stop_id = stop_id_str | plus: 0 %}
+              {% assign remainder = stop_id | modulo: 2 %}
+              {% if remainder == 1 %}
+                {% assign trip = prediction.TripUpdate %}
+                {% assign train_num = trip.Trip.TripId %}
+                {% assign route_id = trip.Trip.RouteId %}
+
+                {% assign route_lower = route_id | downcase %}
+                {% if route_lower contains "local" %}
+                  {% assign train_type = "LOCAL" %}
+                {% elsif route_lower contains "limited" %}
+                  {% assign train_type = "LIMITED" %}
+                {% else %}
+                  {% assign train_type = "EXPRESS" %}
+                {% endif %}
+
+                {% assign delay_seconds = trip.StopTimeUpdate[0].Arrival.Delay | default: 0 %}
+                {% if delay_seconds == 0 or delay_seconds == nil or delay_seconds == blank %}
+                  {% assign status = "On Time" %}
+                {% else %}
+                  {% assign delay_minutes = delay_seconds | divided_by: 60 %}
+                  {% if delay_minutes > 0 %}
+                    {% assign status = delay_minutes | append: " min late" %}
+                  {% else %}
+                    {% assign status = "On Time" %}
+                  {% endif %}
+                {% endif %}
+
+                {% assign departure_ts = trip.StopTimeUpdate[0].Departure.Time %}
+                {% assign departure_pst = departure_ts | minus: pst_offset_seconds %}
+
+                <div class="item bg--black rounded--small" style="padding: 4px 6px;">
+                  <div class="content layout--col">
+                    <div class="flex flex--between" style="align-items: center;">
+                      <div class="bg--white rounded--small" style="padding: 2px 4px;">
+                        <div class="label text--black caltrain-badge">{{ train_type }}</div>
+                      </div>
+                      <div class="label text--white caltrain-label">#{{ train_num }}</div>
+                    </div>
+                    <div class="flex flex--between" style="align-items: baseline;">
+                      <div class="value text--white caltrain-time">{{ departure_pst | date: "%I:%M %p" }}</div>
+                      <div class="label text--white caltrain-label">{{ status }}</div>
+                    </div>
+                  </div>
+                </div>
+                {% assign nb_count = nb_count | plus: 1 %}
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+
+        {% if nb_count == 0 %}
+          <div class="item" style="padding: 6px;">
+            <div class="label label--small">No northbound trains</div>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- SOUTHBOUND COLUMN -->
+      <div class="layout layout--col gap--xsmall caltrain-col">
+        {% assign next_sb_pst = next_sb_ts | minus: pst_offset_seconds %}
+        <div class="label" style="font-weight: bold; padding-left: 4px; font-size: 24px;">↓ Southbound @ {{ next_sb_pst | date: "%I:%M %p" }}</div>
+
+        {% assign sb_count = 0 %}
+        {% for entry in data %}
+          {% for prediction in entry.predictions %}
+            {% if sb_count < 3 %}
+              {% assign stop_id_str = prediction.TripUpdate.StopTimeUpdate[0].StopId %}
+              {% assign stop_id = stop_id_str | plus: 0 %}
+              {% assign remainder = stop_id | modulo: 2 %}
+              {% if remainder == 0 %}
+                {% assign trip = prediction.TripUpdate %}
+                {% assign train_num = trip.Trip.TripId %}
+                {% assign route_id = trip.Trip.RouteId %}
+
+                {% assign route_lower = route_id | downcase %}
+                {% if route_lower contains "local" %}
+                  {% assign train_type = "LOCAL" %}
+                {% elsif route_lower contains "limited" %}
+                  {% assign train_type = "LIMITED" %}
+                {% else %}
+                  {% assign train_type = "EXPRESS" %}
+                {% endif %}
+
+                {% assign delay_seconds = trip.StopTimeUpdate[0].Arrival.Delay | default: 0 %}
+                {% if delay_seconds == 0 or delay_seconds == nil or delay_seconds == blank %}
+                  {% assign status = "On Time" %}
+                {% else %}
+                  {% assign delay_minutes = delay_seconds | divided_by: 60 %}
+                  {% if delay_minutes > 0 %}
+                    {% assign status = delay_minutes | append: " min late" %}
+                  {% else %}
+                    {% assign status = "On Time" %}
+                  {% endif %}
+                {% endif %}
+
+                {% assign departure_ts = trip.StopTimeUpdate[0].Departure.Time %}
+                {% assign departure_pst = departure_ts | minus: pst_offset_seconds %}
+
+                <div class="item bg--black rounded--small" style="padding: 4px 6px;">
+                  <div class="content layout--col">
+                    <div class="flex flex--between" style="align-items: center;">
+                      <div class="bg--white rounded--small" style="padding: 2px 4px;">
+                        <div class="label text--black caltrain-badge">{{ train_type }}</div>
+                      </div>
+                      <div class="label text--white caltrain-label">#{{ train_num }}</div>
+                    </div>
+                    <div class="flex flex--between" style="align-items: baseline;">
+                      <div class="value text--white caltrain-time">{{ departure_pst | date: "%I:%M %p" }}</div>
+                      <div class="label text--white caltrain-label">{{ status }}</div>
+                    </div>
+                  </div>
+                </div>
+                {% assign sb_count = sb_count | plus: 1 %}
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+
+        {% if sb_count == 0 %}
+          <div class="item" style="padding: 6px;">
+            <div class="label label--small">No southbound trains</div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  {% else %}
+    <!-- Error State -->
+    <div class="item">
+      <div class="content layout--col gap--small">
+        <div class="value value--xlarge">⚠️</div>
+        <div class="label label--small">No schedule available</div>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="footer caltrain-footer">
+    <div class="divider"></div>
+    <div class="label label--small">caltrain realtime | bencuan.me/caltrain-trmnl</div>
+  </div>
+</div>

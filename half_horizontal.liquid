@@ -1,0 +1,149 @@
+{%- comment -%}
+  Caltrain TRMNL Plugin - Half Horizontal Layout
+  Compact horizontal view for wide/short screen section
+{%- endcomment -%}
+
+{% assign station_name = "Station" %}
+{% if meta.parent_station.title[0].value %}
+  {% assign station_name = meta.parent_station.title[0].value %}
+{% endif %}
+
+<div class="layout layout--col gap--small">
+  <div class="header">
+    <div class="title title--small">🚂 Caltrain - {{ station_name }}</div>
+  </div>
+
+  {% if data[0].predictions[0] %}
+    <div class="grid grid--cols-2 gap--medium">
+
+      <!-- Northbound -->
+      <div class="layout layout--col gap--small">
+        <div class="label label--small" style="font-weight: bold;">↑ Northbound</div>
+        {% assign nb_count = 0 %}
+        {% for entry in data %}
+          {% for prediction in entry.predictions %}
+            {% if nb_count < 2 %}
+              {% assign stop_id_str = prediction.TripUpdate.StopTimeUpdate[0].StopId %}
+              {% assign stop_id = stop_id_str | plus: 0 %}
+              {% assign remainder = stop_id | modulo: 2 %}
+              {% if remainder == 1 %}
+                {% assign trip = prediction.TripUpdate %}
+                {% assign train_num = trip.Trip.TripId %}
+                {% assign route_id = trip.Trip.RouteId %}
+
+                {% assign route_lower = route_id | downcase %}
+                {% if route_lower contains "local" %}
+                  {% assign train_type = "LOCAL" %}
+                {% elsif route_lower contains "limited" %}
+                  {% assign train_type = "LIMITED" %}
+                {% else %}
+                  {% assign train_type = "EXPRESS" %}
+                {% endif %}
+
+                {% assign delay_seconds = trip.StopTimeUpdate[0].Arrival.Delay | default: 0 %}
+                {% if delay_seconds == 0 or delay_seconds == nil or delay_seconds == blank %}
+                  {% assign status = "On Time" %}
+                {% else %}
+                  {% assign delay_minutes = delay_seconds | divided_by: 60 %}
+                  {% if delay_minutes > 0 %}
+                    {% assign status = "Delayed " | append: delay_minutes | append: " min" %}
+                  {% else %}
+                    {% assign status = "On Time" %}
+                  {% endif %}
+                {% endif %}
+
+                {% assign departure_ts = trip.StopTimeUpdate[0].Departure.Time %}
+                {% assign departure_pst = departure_ts | minus: 28800 %}
+
+                <div class="item bg--black rounded--small" style="padding: 6px;">
+                  <div class="content layout--col gap--xsmall">
+                    <div class="flex gap--small" style="align-items: center;">
+                      <div class="bg--white rounded--small" style="padding: 2px 4px;">
+                        <div class="label label--xsmall text--black" style="font-weight: bold;">{{ train_type }}</div>
+                      </div>
+                      <div class="value value--medium text--white">{{ departure_pst | date: "%I:%M %p" }}</div>
+                    </div>
+                    <div class="label label--xsmall text--white">{{ status }}</div>
+                  </div>
+                </div>
+                {% assign nb_count = nb_count | plus: 1 %}
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+        {% if nb_count == 0 %}
+          <div class="label label--xsmall">No trains</div>
+        {% endif %}
+      </div>
+
+      <!-- Southbound -->
+      <div class="layout layout--col gap--small">
+        <div class="label label--small" style="font-weight: bold;">↓ Southbound</div>
+        {% assign sb_count = 0 %}
+        {% for entry in data %}
+          {% for prediction in entry.predictions %}
+            {% if sb_count < 2 %}
+              {% assign stop_id_str = prediction.TripUpdate.StopTimeUpdate[0].StopId %}
+              {% assign stop_id = stop_id_str | plus: 0 %}
+              {% assign remainder = stop_id | modulo: 2 %}
+              {% if remainder == 0 %}
+                {% assign trip = prediction.TripUpdate %}
+                {% assign train_num = trip.Trip.TripId %}
+                {% assign route_id = trip.Trip.RouteId %}
+
+                {% assign route_lower = route_id | downcase %}
+                {% if route_lower contains "local" %}
+                  {% assign train_type = "LOCAL" %}
+                {% elsif route_lower contains "limited" %}
+                  {% assign train_type = "LIMITED" %}
+                {% else %}
+                  {% assign train_type = "EXPRESS" %}
+                {% endif %}
+
+                {% assign delay_seconds = trip.StopTimeUpdate[0].Arrival.Delay | default: 0 %}
+                {% if delay_seconds == 0 or delay_seconds == nil or delay_seconds == blank %}
+                  {% assign status = "On Time" %}
+                {% else %}
+                  {% assign delay_minutes = delay_seconds | divided_by: 60 %}
+                  {% if delay_minutes > 0 %}
+                    {% assign status = "Delayed " | append: delay_minutes | append: " min" %}
+                  {% else %}
+                    {% assign status = "On Time" %}
+                  {% endif %}
+                {% endif %}
+
+                {% assign departure_ts = trip.StopTimeUpdate[0].Departure.Time %}
+                {% assign departure_pst = departure_ts | minus: 28800 %}
+
+                <div class="item bg--black rounded--small" style="padding: 6px;">
+                  <div class="content layout--col gap--xsmall">
+                    <div class="flex gap--small" style="align-items: center;">
+                      <div class="bg--white rounded--small" style="padding: 2px 4px;">
+                        <div class="label label--xsmall text--black" style="font-weight: bold;">{{ train_type }}</div>
+                      </div>
+                      <div class="value value--medium text--white">{{ departure_pst | date: "%I:%M %p" }}</div>
+                    </div>
+                    <div class="label label--xsmall text--white">{{ status }}</div>
+                  </div>
+                </div>
+                {% assign sb_count = sb_count | plus: 1 %}
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+        {% if sb_count == 0 %}
+          <div class="label label--xsmall">No trains</div>
+        {% endif %}
+      </div>
+
+    </div>
+  {% else %}
+    <div class="item">
+      <div class="content layout--col gap--small">
+        <div class="value value--large">⚠️</div>
+        <div class="label label--small">No schedule</div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
