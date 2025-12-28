@@ -49,6 +49,6 @@ custom_fields:
     field_type: author_bio
     name: Caltrain Real-time Departures
     description: Real-time Caltrain departure times at a glance. Displays next departures for both northbound and southbound trains from your selected station on your TRMNL.
-    github_url: https://github.com/64bitpandas/caltrain-trmnl
+    github_url: https://github.com/64bitpandas/trmnl-caltrain
     learn_more_url: https://bencuan.me/caltrain-trmnl
     email_address: contact@bencuan.me

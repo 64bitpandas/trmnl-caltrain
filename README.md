@@ -6,7 +6,7 @@ Real-time Caltrain departure times for your TRMNL e-ink display. Shows next depa
 
 ## Quick Start
 
-1. Download a release from the latest [releases](https://github.com/64bitpandas/caltrain-trmnl/releases)
+1. Download a release from the latest [releases](https://github.com/64bitpandas/trmnl-caltrain/releases)
 2. Visit the TRMNL Private Plugin page (https://usetrmnl.com/plugin_settings?keyname=private_plugin)
 3. Click "Import New" -> select the downloaded zip file
 4. Select your Caltrain station from the dropdown
