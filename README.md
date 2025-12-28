@@ -6,10 +6,12 @@ Real-time Caltrain departure times for your TRMNL e-ink display. Shows next depa
 
 ## Quick Start
 
-1. Visit the TRMNL plugin page (or create a Private Plugin)
-2. Select your Caltrain station from the dropdown
-3. Choose your preferred layout
-4. Set polling interval (recommended: 5-15 minutes)
+1. Download a release from the latest [releases](https://github.com/64bitpandas/caltrain-trmnl/releases)
+2. Visit the TRMNL Private Plugin page (https://usetrmnl.com/plugin_settings?keyname=private_plugin)
+3. Click "Import New" -> select the downloaded zip file
+4. Select your Caltrain station from the dropdown
+5. Choose your preferred layout
+6. Set polling interval (recommended: 15 minutes)
 
 ## Layouts
 
@@ -19,12 +21,6 @@ Real-time Caltrain departure times for your TRMNL e-ink display. Shows next depa
 | Half Vertical   | `half_vertical.liquid`   | Compact stacked view, 2 trains per direction   |
 | Half Horizontal | `half_horizontal.liquid` | Wide compact view, 2 trains per direction      |
 | Quadrant        | `quadrant.liquid`        | Minimal view showing next train each direction |
-
-## Train Types
-
-- **LOCAL** — Stops at all stations (train numbers starting with 1 or 2)
-- **LIMITED** — Skips some stations (train numbers starting with 3-6)
-- **EXPRESS** — Fastest service, limited stops (train numbers starting with 7+)
 
 ## Data Source
 
